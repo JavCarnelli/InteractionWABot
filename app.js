@@ -44,7 +44,11 @@ app.post("/webhook", (req, res) => {
         req.body.entry[0].changes[0].value.metadata.phone_number_id;
       let from = req.body.entry[0].changes[0].value.messages[0].from; // extract the phone number from the webhook payload
       let msg_body = req.body.entry[0].changes[0].value.messages[0].text.body; // extract the message text from the webhook payload
-      from = "59236154724904";
+      
+      let firstFrom = from;
+      //To avoid errors with the number, it normalizes it before trying to send the message
+      from = NormalizeNumber(from);
+
       msg_body = "General Kenobi";
       axios({
         method: "POST", // Required, HTTP method, a string, e.g. POST, GET
@@ -56,7 +60,7 @@ app.post("/webhook", (req, res) => {
         data: {
           messaging_product: "whatsapp",
           to: from,              //"from" CONTAINS THE PHONE NUMBER TO SEND THE MESSAGE
-          text: { body: "Ack: " + msg_body },          //THE BODY OF THE MESSAGE CONTAINS THE TEXT THAT IS SENDED
+          text: { body: "Ack: " + msg_body + "\nfirst num: " + firstFrom +"\nnormalized num: " + from},          //THE BODY OF THE MESSAGE CONTAINS THE TEXT THAT IS SENDED
         },
         headers: { "Content-Type": "application/json" },
       });
@@ -95,3 +99,16 @@ app.get("/webhook", (req, res) => {
     }
   }
 });
+
+
+
+function NormalizeNumber(phoneNumber)
+{
+  if (phoneNumber.substring(0,2) == "549") //549 236 154 724904
+  {
+    let areaCode = phoneNumber.substring(3,5);
+    let number = phoneNumber.substring(phoneNumber.length - 7, phoneNumber.length - 1);
+    return String.concat("54", areaCode, "154", number);
+  }
+  return phoneNumber;
+};
